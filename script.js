@@ -938,6 +938,154 @@
     };
   }
 
+  // ---------- Planilha e Relatório Mensal da Coordenação ----------
+  function renderizarPlanilhaMes() {
+    var inputMes = $('#adm-mes-selecao');
+    if (!inputMes || !inputMes.value) return;
+
+    var anoMes = inputMes.value;
+    var filtroStatus = $('#adm-mes-filtro-status') ? $('#adm-mes-filtro-status').value : 'todos';
+    var selectTurma = $('#adm-mes-filtro-turma');
+    var filtroTurma = selectTurma ? selectTurma.value : 'todos';
+
+    // Preenche o filtro com os cursos cadastrados, sem duplicar opções.
+    if (selectTurma) {
+      var cursosAtuais = {};
+      Array.prototype.slice.call(selectTurma.options).forEach(function (op) {
+        if (op.value !== 'todos') cursosAtuais[op.value] = true;
+      });
+      db.students.forEach(function (aluno) {
+        if (aluno.curso && !cursosAtuais[aluno.curso]) {
+          var opt = document.createElement('option');
+          opt.value = aluno.curso;
+          opt.textContent = aluno.curso;
+          selectTurma.appendChild(opt);
+          cursosAtuais[aluno.curso] = true;
+        }
+      });
+      filtroTurma = selectTurma.value;
+    }
+
+    // Considera os dias arquivados e o dia atual, quando pertencente ao mês escolhido.
+    var datasMes = [];
+    var hojeIso = getIsoHoje();
+    if (hojeIso.indexOf(anoMes) === 0) datasMes.push(hojeIso);
+    if (db.history) {
+      Object.keys(db.history).forEach(function (dataKey) {
+        if (dataKey.indexOf(anoMes) === 0 && datasMes.indexOf(dataKey) === -1) datasMes.push(dataKey);
+      });
+    }
+    datasMes.sort().reverse();
+
+    var registros = [];
+    var totalComeram = 0;
+    var totalNaoRetiraram = 0;
+    var totalAlunosFiltro = db.students.filter(function (aluno) {
+      return filtroTurma === 'todos' || aluno.curso === filtroTurma;
+    }).length;
+
+    datasMes.forEach(function (dataIso) {
+      var infoDia = obterDadosDoDia(dataIso);
+      var att = infoDia.attendance || {};
+      var snk = infoDia.snacks || {};
+
+      db.students.forEach(function (aluno) {
+        if (filtroTurma !== 'todos' && aluno.curso !== filtroTurma) return;
+
+        var retirada = snk[aluno.matricula];
+        var comeu = !!retirada;
+        var chamada = att[aluno.matricula] || 'Sem registro';
+        if (comeu) totalComeram++;
+        else totalNaoRetiraram++;
+
+        if (filtroStatus === 'comeram' && !comeu) return;
+        if (filtroStatus === 'nao_retiraram' && comeu) return;
+
+        registros.push({
+          data: dataIso,
+          aluno: aluno.nome,
+          matricula: aluno.matricula,
+          turma: aluno.curso || 'Não informada',
+          turno: aluno.turno || 'N/I',
+          seAlimentou: comeu,
+          hora: comeu && retirada && retirada.hora ? retirada.hora : null,
+          chamada: chamada
+        });
+      });
+    });
+
+    var totalGeral = totalComeram + totalNaoRetiraram;
+    var taxa = totalGeral > 0 ? Math.round((totalComeram / totalGeral) * 100) : 0;
+    $('#mes-total-alunos').textContent = totalAlunosFiltro;
+    $('#mes-total-comeram').textContent = totalComeram;
+    $('#mes-total-pendentes').textContent = totalNaoRetiraram;
+    $('#mes-taxa-adesao').textContent = taxa + '%';
+
+    var tbody = $('#adm-tabela-mes');
+    if (!tbody) return;
+    if (!datasMes.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="t-vazio">Nenhum registro encontrado para o mês selecionado (' + esc(anoMes) + ').</td></tr>';
+      return;
+    }
+    if (!registros.length) {
+      tbody.innerHTML = '<tr><td colspan="8" class="t-vazio">Nenhum registro corresponde aos filtros selecionados.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = registros.map(function (r) {
+      var statusLanche = r.seAlimentou
+        ? '<span class="selo selo-verde">Se Alimentou</span>'
+        : '<span class="selo selo-vermelho">Não retirou lanche</span>';
+      var statusChamada = r.chamada === 'P'
+        ? '<span class="selo selo-verde">Presente</span>'
+        : (r.chamada === 'F' ? '<span class="selo selo-vermelho">Falta</span>' : '<span class="selo selo-cinza">' + esc(r.chamada) + '</span>');
+      var dataHoraFormatada = r.hora
+        ? fmtDataBrSimples(r.data) + ' às ' + fmtHora(r.hora)
+        : fmtDataBrSimples(r.data) + ' (Sem retirada)';
+
+      return '<tr>' +
+        '<td>' + esc(fmtDataBrSimples(r.data)) + '</td>' +
+        '<td class="t-nome">' + esc(r.aluno) + '</td>' +
+        '<td>' + esc(r.matricula) + '</td>' +
+        '<td><span class="t-curso" style="display:inline; font-size:.85rem;">' + esc(r.turma) + '</span></td>' +
+        '<td>' + esc(r.turno) + '</td>' +
+        '<td>' + statusLanche + '</td>' +
+        '<td>' + esc(dataHoraFormatada) + '</td>' +
+        '<td>' + statusChamada + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function exportarMesCSV() {
+    var inputMes = $('#adm-mes-selecao');
+    var anoMes = inputMes && inputMes.value ? inputMes.value : 'mes';
+    var linhas = [['Data', 'Aluno', 'Matrícula', 'Turma/Curso', 'Turno', 'Status do Lanche', 'Horário de Retirada', 'Presença']];
+    var tabela = $('#adm-tabela-mes');
+    if (!tabela) return;
+
+    tabela.querySelectorAll('tr').forEach(function (tr) {
+      var tds = tr.querySelectorAll('td');
+      if (tds.length === 8) {
+        var linha = [];
+        tds.forEach(function (td) {
+          linha.push('"' + td.textContent.replace(/"/g, '""').trim() + '"');
+        });
+        linhas.push(linha);
+      }
+    });
+
+    var csvConteudo = '\uFEFF' + linhas.map(function (linha) { return linha.join(';'); }).join('\n');
+    var blob = new Blob([csvConteudo], { type: 'text/csv;charset=utf-8;' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'relatorio_smartlanche_' + anoMes + '.csv';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
   function renderAdmin() {
     var hoje = getIsoHoje();
     if (!dataConsultaAdmin) dataConsultaAdmin = hoje;
@@ -1116,6 +1264,18 @@
     $('#busca').addEventListener('input', renderBusca);
     $('#adm-filtro').addEventListener('change', renderAdmin);
     if ($('#adm-filtro-turno')) $('#adm-filtro-turno').addEventListener('change', renderAdmin);
+
+    // Dados do Mês (Coordenação)
+    var inputMesAdmin = $('#adm-mes-selecao');
+    if (inputMesAdmin) {
+      var dataHojeMes = new Date();
+      inputMesAdmin.value = dataHojeMes.getFullYear() + '-' + String(dataHojeMes.getMonth() + 1).padStart(2, '0');
+      inputMesAdmin.addEventListener('change', renderizarPlanilhaMes);
+    }
+    if ($('#adm-mes-filtro-status')) $('#adm-mes-filtro-status').addEventListener('change', renderizarPlanilhaMes);
+    if ($('#adm-mes-filtro-turma')) $('#adm-mes-filtro-turma').addEventListener('change', renderizarPlanilhaMes);
+    if ($('#btn-exportar-mes-csv')) $('#btn-exportar-mes-csv').addEventListener('click', exportarMesCSV);
+    renderizarPlanilhaMes();
 
     // Eventos da Câmera de Cadastro (Selfie)
     $('#btn-abrir-camera').addEventListener('click', abrirCameraSelfie);

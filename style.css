@@ -1,6 +1,6 @@
 /* ===== SmartLanche SENAI — style.css ===== */
 :root {
-  --azul: #0050A0;
+  --azul: #014a94;
   --azul-esc: #003A75;
   --azul-claro: #E6EFF9;
   --vermelho: #E3000F;
@@ -601,4 +601,24 @@ input:focus, select:focus { border-color: var(--azul); outline: none; box-shadow
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-delay: 0s !important; transition: none !important; }
   .pix-circulo, .pix-marca, .pix-overlay.erro .pix-x { stroke-dashoffset: 0; }
+}
+
+/* ===== Logo SmartLanche ===== */
+.logo-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 150px;
+  max-width: 100%;
+  overflow: hidden;
+}
+.logo-smartlanche {
+  display: block;
+  width: 100%;
+  max-width: 150px;
+  height: auto;
+  object-fit: contain;
+}
+@media (min-width: 760px) {
+  .logo-container, .logo-smartlanche { max-width: 175px; width: 175px; }
 }

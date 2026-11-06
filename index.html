@@ -14,7 +14,9 @@
 
   <header class="topo">
     <div class="marca">
-      <span class="marca-nome">SmartLanche</span>
+      <div class="logo-container">
+        <img src="logo.png" alt="Logo SmartLanche" class="logo-smartlanche">
+      </div>
     </div>
     <nav id="nav" class="nav" role="tablist" aria-label="Módulos do sistema">
       <button type="button" class="nav-btn ativo" data-view="aluno" role="tab" aria-selected="true">Aluno</button>
@@ -363,11 +365,83 @@
         </div>
       </div>
 
+      <!-- ===================== DADOS DO MÊS (PLANILHA MENSAL) ===================== -->
+      <div class="cartao espaco-topo" id="adm-box-dados-mes">
+        <h2 class="titulo-2">📊 Dados do Mês</h2>
+        <p class="sub">Selecione o mês desejado para visualizar a planilha consolidada de alimentação e presença de todos os alunos.</p>
+
+        <div class="adm-filtros-grade" style="margin-bottom: 1rem;">
+          <div>
+            <label for="adm-mes-selecao">Selecionar Mês/Ano</label>
+            <input id="adm-mes-selecao" type="month">
+          </div>
+          <div>
+            <label for="adm-mes-filtro-status">Filtrar por Situação</label>
+            <select id="adm-mes-filtro-status">
+              <option value="todos">Todos os registros</option>
+              <option value="comeram">Alunos que se alimentaram</option>
+              <option value="nao_retiraram">Alunos que não estão retirando lanche</option>
+            </select>
+          </div>
+          <div>
+            <label for="adm-mes-filtro-turma">Filtrar por Turma / Curso</label>
+            <select id="adm-mes-filtro-turma">
+              <option value="todos">Todas as turmas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="stats stats-4" style="margin-bottom: 1rem;">
+          <div class="stat"><span class="stat-num" id="mes-total-alunos">0</span><span class="stat-rot">Alunos no Mês</span></div>
+          <div class="stat"><span class="stat-num texto-verde" id="mes-total-comeram">0</span><span class="stat-rot">Lanches Retirados</span></div>
+          <div class="stat"><span class="stat-num texto-vermelho" id="mes-total-pendentes">0</span><span class="stat-rot">Dias Sem Retirar</span></div>
+          <div class="stat"><span class="stat-num texto-cinza" id="mes-taxa-adesao">0%</span><span class="stat-rot">Taxa de Adesão</span></div>
+        </div>
+
+        <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <button type="button" id="btn-exportar-mes-csv" class="btn btn-contorno btn-peq">📥 Baixar Planilha (.CSV)</button>
+        </div>
+
+        <div class="tabela-wrap">
+          <table class="tabela" style="min-width: 1000px;">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Aluno</th>
+                <th>Matrícula</th>
+                <th>Turma / Curso</th>
+                <th>Turno</th>
+                <th>Status do Lanche</th>
+                <th>Data e Hora</th>
+                <th>Chamada</th>
+              </tr>
+            </thead>
+            <tbody id="adm-tabela-mes">
+              <tr>
+                <td colspan="8" class="t-vazio">Selecione um mês acima para carregar a planilha.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="cartao cartao-estreito espaco-topo">
         <h2 class="titulo-2">Novo dia</h2>
         <button type="button" id="btn-zerar" class="btn btn-vermelho btn-bloco">Zerar Sistema para o Dia Seguinte</button>
         <p class="ajuda">Arquiva o dia atual no histórico para consulta futura e reinicia a lista diária. Os alunos cadastrados permanecem salvos.</p>
       </div>
+
+      <table id="adm-historico" hidden>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Alunos</th>
+            <th>Retiraram</th>
+            <th>Pendentes</th>
+            <th>Faltas</th>
+          </tr>
+        </thead>
+        <tbody id="adm-historico-corpo"></tbody>
     </section>
 
   </main>

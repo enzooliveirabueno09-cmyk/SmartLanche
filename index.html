@@ -365,6 +365,13 @@
         </div>
       </div>
 
+      <div class="cartao cartao-estreito espaco-topo">
+        <h2 class="titulo-2">Novo dia</h2>
+        <button type="button" id="btn-zerar" class="btn btn-vermelho btn-bloco">Zerar Sistema para o Dia Seguinte</button>
+        <p class="ajuda">Arquiva o dia atual no histórico para consulta futura e reinicia a lista diária. Os alunos cadastrados permanecem salvos.</p>
+      </div>
+
+      
       <!-- ===================== DADOS DO MÊS (PLANILHA MENSAL) ===================== -->
       <div class="cartao espaco-topo" id="adm-box-dados-mes">
         <h2 class="titulo-2">📊 Dados do Mês</h2>
@@ -403,7 +410,7 @@
         </div>
 
         <div class="tabela-wrap">
-          <table class="tabela" style="min-width: 1000px;">
+          <table class="tabela">
             <thead>
               <tr>
                 <th>Data</th>
@@ -425,12 +432,6 @@
         </div>
       </div>
 
-      <div class="cartao cartao-estreito espaco-topo">
-        <h2 class="titulo-2">Novo dia</h2>
-        <button type="button" id="btn-zerar" class="btn btn-vermelho btn-bloco">Zerar Sistema para o Dia Seguinte</button>
-        <p class="ajuda">Arquiva o dia atual no histórico para consulta futura e reinicia a lista diária. Os alunos cadastrados permanecem salvos.</p>
-      </div>
-
       <table id="adm-historico" hidden>
         <thead>
           <tr>
@@ -442,6 +443,7 @@
           </tr>
         </thead>
         <tbody id="adm-historico-corpo"></tbody>
+      </table>
     </section>
 
   </main>

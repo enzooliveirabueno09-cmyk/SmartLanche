@@ -14,7 +14,9 @@
 
   <header class="topo">
     <div class="marca">
-      <span class="marca-nome">SmartLanche</span>
+      <div class="logo-container">
+        <img src="logo.png" alt="Logo SmartLanche" class="logo-smartlanche">
+      </div>
     </div>
     <nav id="nav" class="nav" role="tablist" aria-label="Módulos do sistema">
       <button type="button" class="nav-btn ativo" data-view="aluno" role="tab" aria-selected="true">Aluno</button>
@@ -66,8 +68,9 @@
             <option value="Noite">Noite</option>
           </select>
 
-          <label for="cad-matricula">Matrícula (somente números)</label>
-          <input id="cad-matricula" type="text" inputmode="numeric" autocomplete="off" maxlength="15" placeholder="Ex.: 20240123">
+          <label for="cad-matricula">Matrícula automática</label>
+          <input id="cad-matricula" type="text" inputmode="numeric" autocomplete="off" maxlength="15" placeholder="Será gerada automaticamente" readonly aria-readonly="true">
+          <p class="ajuda-label">A matrícula é gerada pelo sistema e não pode ser alterada.</p>
 
           <!-- Captura da Foto do Rosto -->
           <label>Foto do rosto (Antifraude)</label>
@@ -127,6 +130,14 @@
             <p id="aluno-dica" class="ficha-dica">Mostre esta tela para a câmera da cantina. Sua foto será conferida no leitor.</p>
           </div>
         </div>
+
+        <section id="aluno-cardapio-dia" class="aluno-cardapio-dia" aria-live="polite">
+          <div class="aluno-cardapio-icone" aria-hidden="true">🍽️</div>
+          <div class="aluno-cardapio-conteudo">
+            <span class="aluno-cardapio-rotulo">CARDÁPIO DE HOJE</span>
+            <strong id="aluno-cardapio-texto">Cardápio ainda não informado pela cantina.</strong>
+          </div>
+        </section>
 
         <div id="aluno-retirado" class="retirado" hidden role="status">
           <svg class="retirado-icone" viewBox="0 0 52 52" aria-hidden="true">
@@ -253,6 +264,30 @@
         </div>
       </div>
 
+      <!-- Presentes por turno, conforme a chamada dos professores -->
+      <div class="cartao espaco-topo" id="cantina-presenca-turnos">
+        <h2 class="titulo-2">Alunos Presentes por Turno</h2>
+        <p class="sub">Quantidade de alunos marcados como presentes na chamada de hoje.</p>
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-num" id="cantina-presentes-manha">0</span>
+            <span class="stat-rot">Manhã</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num" id="cantina-presentes-tarde">0</span>
+            <span class="stat-rot">Tarde</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num" id="cantina-presentes-noite">0</span>
+            <span class="stat-rot">Noite</span>
+          </div>
+          <div class="stat">
+            <span class="stat-num texto-verde" id="cantina-presentes-total">0</span>
+            <span class="stat-rot">Total de Presentes</span>
+          </div>
+        </div>
+      </div>
+
       <div class="grade-cantina">
         <div class="cartao">
           <h1 class="titulo">Leitor de QR Code</h1>
@@ -368,6 +403,80 @@
         <button type="button" id="btn-zerar" class="btn btn-vermelho btn-bloco">Zerar Sistema para o Dia Seguinte</button>
         <p class="ajuda">Arquiva o dia atual no histórico para consulta futura e reinicia a lista diária. Os alunos cadastrados permanecem salvos.</p>
       </div>
+
+      
+      <!-- ===================== DADOS DO MÊS (PLANILHA MENSAL) ===================== -->
+      <div class="cartao espaco-topo" id="adm-box-dados-mes">
+        <h2 class="titulo-2">📊 Dados do Mês</h2>
+        <p class="sub">Selecione o mês desejado para visualizar a planilha consolidada de alimentação e presença de todos os alunos.</p>
+
+        <div class="adm-filtros-grade" style="margin-bottom: 1rem;">
+          <div>
+            <label for="adm-mes-selecao">Selecionar Mês/Ano</label>
+            <input id="adm-mes-selecao" type="month">
+          </div>
+          <div>
+            <label for="adm-mes-filtro-status">Filtrar por Situação</label>
+            <select id="adm-mes-filtro-status">
+              <option value="todos">Todos os registros</option>
+              <option value="comeram">Alunos que se alimentaram</option>
+              <option value="nao_retiraram">Alunos que não estão retirando lanche</option>
+            </select>
+          </div>
+          <div>
+            <label for="adm-mes-filtro-turma">Filtrar por Turma / Curso</label>
+            <select id="adm-mes-filtro-turma">
+              <option value="todos">Todas as turmas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="stats stats-4" style="margin-bottom: 1rem;">
+          <div class="stat"><span class="stat-num" id="mes-total-alunos">0</span><span class="stat-rot">Alunos no Mês</span></div>
+          <div class="stat"><span class="stat-num texto-verde" id="mes-total-comeram">0</span><span class="stat-rot">Lanches Retirados</span></div>
+          <div class="stat"><span class="stat-num texto-vermelho" id="mes-total-pendentes">0</span><span class="stat-rot">Dias Sem Retirar</span></div>
+          <div class="stat"><span class="stat-num texto-cinza" id="mes-taxa-adesao">0%</span><span class="stat-rot">Taxa de Adesão</span></div>
+        </div>
+
+        <div style="margin-bottom: 1rem; display: flex; gap: 0.5rem; justify-content: flex-end;">
+          <button type="button" id="btn-exportar-mes-csv" class="btn btn-contorno btn-peq">📥 Baixar Planilha (.CSV)</button>
+        </div>
+
+        <div class="tabela-wrap">
+          <table class="tabela">
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Aluno</th>
+                <th>Matrícula</th>
+                <th>Turma / Curso</th>
+                <th>Turno</th>
+                <th>Status do Lanche</th>
+                <th>Data e Hora</th>
+                <th>Chamada</th>
+              </tr>
+            </thead>
+            <tbody id="adm-tabela-mes">
+              <tr>
+                <td colspan="8" class="t-vazio">Selecione um mês acima para carregar a planilha.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <table id="adm-historico" hidden>
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Alunos</th>
+            <th>Retiraram</th>
+            <th>Pendentes</th>
+            <th>Faltas</th>
+          </tr>
+        </thead>
+        <tbody id="adm-historico-corpo"></tbody>
+      </table>
     </section>
 
   </main>
